@@ -1,60 +1,85 @@
-# Cómo contribuir a SnowSend
+# Contributing to TigerSend
 
-Gracias por interesarte. Este es un proyecto pequeño y con un objetivo
-muy concreto: **que un Mac con Mac OS X 10.6 Snow Leopard pueda
-intercambiar archivos con dispositivos modernos que usan el protocolo
-LocalSend v2**.
+Thank you for caring. This is a small project with a very concrete goal:
+**a Mac running Mac OS X 10.4 Tiger (or anything newer, on PowerPC or on
+Intel) should be able to exchange files with devices that speak LocalSend
+v2**.
 
-## Reglas del proyecto (no negociables)
+That goal is what makes the rules below non-negotiable. A pull request that
+adds a dependency, a Python-2.6-only feature or a Tk 8.5 widget is a pull
+request that makes the app stop working on the machines it exists for.
 
-Estas restricciones son la razón de existir de SnowSend; los PR que las
-rompan no se pueden aceptar:
+## The rules
 
-1. **Solo Python 2.6/2.7 y la librería estándar de Snow Leopard.**
-   Nada de `pip`, `requests`, `flask`, `PyInstaller`, `py2app` ni
-   dependencias que haya que compilar.
-2. **El código debe seguir funcionando en Python 3** (para poder
-   probarlo en máquinas modernas y en CI).
-3. **El paquete `SnowSend.app` debe seguir siendo un bundle clásico
-   de 10.6** (`Contents/Info.plist`, `Contents/MacOS/launcher` ejecutable,
-   `Contents/Resources/snowsend.py`).
-4. **Sin código copiado de otros proyectos.** El código es original.
-   Especialmente: no se acepta código de proyectos con licencia
-   GPL/LGPL (por ejemplo clientes de LocalSend para iOS), porque
-   cambiaría la licencia del proyecto entero.
-5. **Mantener la licencia MIT** y el aviso de copyright en las copias.
+1. **Runs on Python 2.3.5** (the `/usr/bin/python` of Tiger), and on 2.4,
+   2.5, 2.6, 2.7 and 3.x without changes.
+   - no `pip`, `requests`, `flask`, `PyInstaller`, `py2app` — standard
+     library only;
+   - no syntax newer than 2.3: no `with`, no `except X as e`, no
+     `a if b else c`, no generator expressions, no decorators, no set/dict
+     comprehensions, no `b'…'` literals, no keyword-only arguments, and
+     never `except` **and** `finally` in the same `try`;
+   - no `sorted()`, `set()`, `any()`, `all()`, `bytes()`, `bytearray`,
+     `str.format()`, `os.urandom`, `os.path.relpath`, `subprocess`, `uuid`,
+     `socket.create_connection`, `threading.Event`, `Thread.daemon`;
+   - imports that moved between Python 2 and 3 (`Tkinter`, `BaseHTTPServer`,
+     `Queue`, `StringIO`…) stay inside the single compatibility block at the
+     top of `tigersend.py`.
+2. **The bundle stays architecture neutral.** `/bin/sh` launcher plus Python
+   source, no compiled code, `LSMinimumSystemVersion=10.4`, no
+   `LSRequiresNativeExecution`. `build_app.sh` verifies this.
+3. **The protocol stays HTTP on port 53317** with encryption off, and the
+   endpoints keep answering what the official app expects.
+4. **No copied code.** Everything here is original. In particular, no code
+   from GPL/LGPL projects (for example LocalSend clients for iOS), because it
+   would change the license of the whole project.
+5. **Keep the MIT license** and the copyright notice in copies.
 
-## Antes de enviar un cambio
+## Before sending a change
 
 ```sh
-python3 -m py_compile snowsend.py
-python3 tests/test_server_regression.py
-python3 tests/test_send_fake_iphone.py
-MODE=chunked python3 tests/test_send_fake_iphone.py
-MODE=gzip python3 tests/test_send_fake_iphone.py
-MODE=close python3 tests/test_send_fake_iphone.py
-python3 tests/test_register_and_diagnose.py
-chmod +x build_app.sh && ./build_app.sh
+sh tests/run_tests.sh                           # matrix on every Python found
+python3 tests/check_legacy_syntax.py tigersend.py   # syntax + stdlib audit for 2.3
+python3 tests/test_tigersend.py                 # full suite (fast)
+./build_app.sh --check                          # bundle + self test
 ```
 
-Todas las pruebas deben pasar (en CI también corre el mismo conjunto).
+And, ideally, the same suite on the old interpreters. On a modern Linux or
+macOS box a real CPython 2.3.5 is two commands away (see README §9); the
+expected results are:
 
-## Cómo reportar un fallo
+```
+Python 2.3.5   223 checks passed, 0 failed
+Python 2.5.6   223 checks passed, 0 failed
+Python 2.7.18  229 checks passed, 0 failed
+Python 3.11    231 checks passed, 0 failed
+```
 
-Adjunta, por favor:
+The suite needs no display and no peer: it starts engines on loopback and
+uses `tests/fake_tk.py` for the window.
 
-- La versión de SnowSend (aparece en el registro al arrancar).
-- El sistema del otro dispositivo y la versión de su app LocalSend.
-- **El registro completo de `~/Library/Logs/SnowSend.log`** desde el
-  arranque hasta el fallo. Es lo que más ayuda: incluye el cuerpo y las
-  cabeceras crudas cuando una respuesta no es JSON.
-- Si el fallo es de red: ¿multicast funciona en tu red? ¿Lo mismo ocurre
-  con *Escanear red*?
+## How to report a bug
 
-## Ideas bienvenidas
+Please attach:
 
-- Diálogo de aceptar/rechazar al recibir (ahora se acepta todo).
-- Envío de texto y de carpetas.
-- Icono propio para el `.app`.
-- Traducción de la interfaz al inglés.
-- Soporte del endpoint `/cancel` en la interfaz.
+- the version of TigerSend (first line of the log),
+- the first ten lines of `~/Library/Logs/TigerSend.log` — they contain the
+  system version, the architecture, the Python in use and the port,
+- **the complete log from the launch to the failure**. It is what helps most:
+  it includes the file names, the HTTP status, the response body when a
+  response was not JSON, and the exact step that failed,
+- the other device: model, system, and its LocalSend version and encryption
+  setting,
+- if it is a network problem: does multicast work on your network? Does the
+  same thing happen with *Scan network*?
+
+## Ideas for later
+
+- An accept/reject dialog for incoming transfers.
+- Sending text and whole folders (the protocol supports it).
+- Verifying SHA-256 when the peer offers it (only on Python 2.5+, where
+  `hashlib` exists).
+- The download API (`download: true`), so the phone can pull files from the
+  old Mac.
+- More translations: copy a table in `TR` and the test suite will tell you if
+  you missed a key.

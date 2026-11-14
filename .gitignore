@@ -1,0 +1,15 @@
+# Build output (regenerate with ./build_app.sh)
+TigerSend.app/
+TigerSend-*.zip
+SHA256SUMS.txt
+
+# Python leftovers
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Editor / OS noise
+.DS_Store
+._*
+*.swp
+*.bak
