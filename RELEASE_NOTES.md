@@ -66,7 +66,9 @@ This release is the "make it work on Tiger, on both architectures" release.
   a fake Tk). `python tigersend.py --self-test` does the same on the old Mac
   without needing a peer.
 - **`--headless`, `--alias`, `--save-dir`, `--port`, `--announce`,
-  `--self-test`** command line options.
+  `--self-test`** command line options. The self test now takes free ports
+  from the kernel, so it can run next to a working TigerSend (or twice at
+  once) without “port busy” failures.
 - Five languages switchable on the fly: English, Español, Français, Deutsch,
   Português.
 

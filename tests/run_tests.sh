@@ -71,12 +71,14 @@ for candidate in $CANDIDATES; do
     esac
 
     echo "-- built-in self test"
-    if "$python_bin" tigersend.py --self-test 2>&1 | tail -2 | grep -q "All self tests passed"; then
+    if "$python_bin" tigersend.py --self-test > /tmp/tigersend-selftest.$$ 2>&1; then
         echo "   ok"
     else
-        echo "   FAILED"
+        echo "   FAILED, last lines:"
+        tail -5 /tmp/tigersend-selftest.$$
         status=1
     fi
+    rm -f /tmp/tigersend-selftest.$$
 
     if [ "$status" -eq 0 ]; then
         SUMMARY="$SUMMARY

@@ -3552,13 +3552,20 @@ def run_self_test():
         handle.close()
     source_size = os.path.getsize(fsenc(source))
 
-    receiver = TigerSendEngine(alias=u'Receiver', save_dir=inbox, port=53417,
+    # port 0: let the kernel pick free ports, so that two self tests (or a
+    # self test next to a running TigerSend) cannot collide.
+    receiver = TigerSendEngine(alias=u'Receiver', save_dir=inbox, port=0,
                                cfg_file=os.path.join(work, 'receiver.json'),
                                echo=0)
-    sender = TigerSendEngine(alias=u'Sender', port=53418,
+    sender = TigerSendEngine(alias=u'Sender', port=0,
                              cfg_file=os.path.join(work, 'sender.json'),
                              echo=0)
     receiver.start_server()
+    if not receiver.server_ok or not receiver.port:
+        check(u'server starts on a free port', False,
+              u'could not bind: %s (temp folder: %s)' % (receiver.port, work))
+        return failures
+    rport = receiver.port
     sender.log = lambda text: None
     try:
         info = receiver.device_info(0)
@@ -3566,27 +3573,27 @@ def run_self_test():
               info.get('alias') == u'Receiver'
               and info.get('protocol') == 'http'
               and info.get('fingerprint') == receiver.fingerprint
-              and info.get('port') == 53417, repr(info))
+              and info.get('port') == rport, repr(info))
 
-        response = http_request('127.0.0.1', 53417, 'GET',
+        response = http_request('127.0.0.1', rport, 'GET',
                                 API_BASE + '/info', timeout=5.0)
         check(u'GET /info', response.status == 200
               and response.json().get('alias') == u'Receiver',
               response.summary())
 
-        response = http_json('127.0.0.1', 53417, 'POST',
+        response = http_json('127.0.0.1', rport, 'POST',
                              API_BASE + '/register',
                              sender.device_info(0), timeout=5.0)
         check(u'POST /register', response.status == 200
               and response.json().get('alias') == u'Receiver',
               response.summary())
 
-        response = http_request('127.0.0.1', 53417, 'GET', '/nope',
+        response = http_request('127.0.0.1', rport, 'GET', '/nope',
                                 timeout=5.0)
         check(u'404 on unknown path', response.status == 404)
 
         # full round trip: sender -> receiver through the protocol
-        device = {'ip': '127.0.0.1', 'port': 53417, 'alias': u'Receiver',
+        device = {'ip': '127.0.0.1', 'port': rport, 'alias': u'Receiver',
                   'fingerprint': receiver.fingerprint, 'model': u'test'}
         sent, total = sender.send_files(device, [source])
         check(u'prepare-upload + upload', sent == 1 and total == 1,
@@ -3606,7 +3613,7 @@ def run_self_test():
                   len(content) == source_size)
 
         # chunked upload (what iOS sends) through the real server
-        prepare = http_json('127.0.0.1', 53417, 'POST',
+        prepare = http_json('127.0.0.1', rport, 'POST',
                             API_BASE + '/prepare-upload',
                             {'info': sender.device_info(0),
                              'files': {'abc': {'id': 'abc',
@@ -3624,7 +3631,7 @@ def run_self_test():
         token = to_text((answer.get('files') or {}).get('abc') or '')
         check(u'session id and token', session_id != u'' and token != u'')
         if session_id and token:
-            check(u'chunked upload', chunked_upload(53417, session_id, 'abc',
+            check(u'chunked upload', chunked_upload(rport, session_id, 'abc',
                                                     token, to_bytes('hello world')))
             chunked_file = os.path.join(inbox, u'chunked.bin')
             check(u'chunked file written', os.path.exists(fsenc(chunked_file)))
@@ -3638,7 +3645,7 @@ def run_self_test():
                       repr(payload))
 
             # cancel must drop the session
-            response = http_json('127.0.0.1', 53417, 'POST',
+            response = http_json('127.0.0.1', rport, 'POST',
                                  API_BASE + '/cancel?sessionId='
                                  + url_quote(session_id), {}, timeout=5.0)
             check(u'POST /cancel', response.status == 200,
@@ -3647,7 +3654,7 @@ def run_self_test():
                   receiver.get_session(session_id) is None)
 
         # a rejected/empty prepare-upload must answer 204
-        empty = http_json('127.0.0.1', 53417, 'POST',
+        empty = http_json('127.0.0.1', rport, 'POST',
                           API_BASE + '/prepare-upload',
                           {'info': sender.device_info(0), 'files': {}},
                           timeout=5.0)
@@ -3655,13 +3662,13 @@ def run_self_test():
               empty.summary())
 
         # bad token must be refused
-        prepare = http_json('127.0.0.1', 53417, 'POST',
+        prepare = http_json('127.0.0.1', rport, 'POST',
                             API_BASE + '/prepare-upload',
                             {'info': sender.device_info(0),
                              'files': {'x': {'id': 'x', 'fileName': 'x.bin',
                                              'size': 3}}}, timeout=5.0)
         answer = prepare.json()
-        bad = http_request('127.0.0.1', 53417, 'POST',
+        bad = http_request('127.0.0.1', rport, 'POST',
                            API_BASE + '/upload?sessionId=%s&fileId=x&token=nope'
                            % url_quote(to_text(answer.get('sessionId') or '')),
                            body=to_bytes('abc'), timeout=5.0)
