@@ -1,17 +1,19 @@
-# TigerSend 1.7 (2.0.7-10.4)
+# TigerSend 1.8 (2.0.8-10.4)
 
-**LocalSend protocol v2 client for Mac OS X 10.4 Tiger → 10.6 Snow Leopard.**
-Plain HTTP on port 53317, UDP multicast discovery, Tkinter GUI, zero
-dependencies — it runs on the Python (2.3–2.7) that ships with the system.
+**LocalSend protocol v2 client for Mac OS X 10.4 Tiger → modern macOS, on
+PowerPC and on Intel.** Plain HTTP on port 53317, UDP multicast discovery,
+Tkinter GUI, zero dependencies — it runs on the Python (2.3 – 3.x) that ships
+with the system.
 
 > ⚠️ **Before transferring anything**: on the phone / modern computer open
 > LocalSend → Settings → **Encryption → OFF**, then restart LocalSend there.
-> Old Mac OS X cannot do modern TLS, so TigerSend only speaks plain HTTP.
+> Tiger/Leopard/Snow Leopard cannot do modern TLS, so TigerSend only speaks
+> plain HTTP.
 
 ## Install
 
-1. Download **`TigerSend-1.7.zip`** below and copy it to the old Mac
-   (USB stick, SMB, FTP…). Always carry the ZIP, not the bare `.app` folder.
+1. Download **`TigerSend-1.8.zip`** below and copy it to the old Mac (USB
+   stick, SMB, FTP…). Always carry the ZIP, not the bare `.app` folder.
 2. Double-click the ZIP to expand it and drag `TigerSend.app` to
    `/Applications`.
 3. Double-click `TigerSend.app`. No Terminal window opens; if nothing
@@ -23,40 +25,65 @@ dependencies — it runs on the Python (2.3–2.7) that ships with the system.
    ```
 
 Prefer building it yourself? Clone the repo on the old Mac and run
-`sh build_app.sh` — it produces the exact same bundle.
+`sh build_app.sh` — it produces the same bundle.
 
 ## Highlights of this release
 
-- **Renamed to TigerSend** (was SnowSend) and **minimum system lowered to
-  Mac OS X 10.4 Tiger**: Python 2.3/2.4 compatible — bundled mini JSON
-  codec (no `json` module before 2.6), `hashlib` → `md5` fallback, device
-  table drawn with a monospaced `Listbox` (Tk 8.4 has no Treeview), no
-  Python-2.5+ syntax anywhere.
-- **Settings persist** in `~/.tigersend_config.json`: alias, language,
-  download folder and the device fingerprint (the Mac stays the same device
-  in the phone's list across launches).
-- **Chunked reception** (`Transfer-Encoding: chunked`, what iOS sends) with
-  streaming to disk, plus explicit `Expect: 100-continue` handling.
-- **macOS/BSD multicast fix**: `IP_MULTICAST_IF` on announce, `INADDR_ANY`
-  listener (avoids `[Errno 49]`).
-- Five languages switchable on the fly: English, Español, Français,
-  Deutsch, Português.
-- File queue, Paste Clipboard, mid-transfer Cancel with `POST /cancel`,
-  activity log, subnet scanner — see the README for the full tour.
+This release is the "make it work on Tiger, on both architectures" release.
+
+- **Actually runs on Tiger's Python 2.3.5.** Version 1.7 claimed 2.3 support
+  but could not start on it: `except`+`finally` in one `try`, ternary
+  expressions in the hot paths, `HTTPServer.server_address` being empty on
+  2.3, `threading.Event.is_set()`, `httplib` without timeouts, and unicode
+  formatting that raised `UnicodeDecodeError` on any file name with an
+  accent. All of it is gone, and the whole file is now valid Python 2.3
+  syntax (checked automatically by `tests/check_legacy_syntax.py`).
+- **One bundle for PowerPC and Intel.** The `.app` contains no machine code:
+  a POSIX `sh` launcher picks the first interpreter that really has Tkinter
+  (`pythonw` … `python3`) and runs the source. `LSMinimumSystemVersion` is
+  `10.4` and `LSRequiresNativeExecution` is gone, so the same download runs
+  on a G3/G4/G5 and on Intel.
+- **Tiger-proof launcher.** Resolves symlinks, sets a sane `PATH` for
+  Finder-launched apps, rotates `~/Library/Logs/TigerSend.log` at 1 MB, and
+  shows a dialog instead of dying silently when no Python has Tk.
+- **New HTTP client on raw sockets.** Timeouts work on 2.3 – 2.5 (where
+  `httplib` has none), cancellations really interrupt an upload, and chunked
+  / gzip / no-`Content-Length` / `204` / interim `100 Continue` responses are
+  understood on every Python.
+- **Correct behaviour when a request is refused.** The body is drained before
+  answering `403`, so the sender sees the rejection instead of a TCP reset
+  (Python 2.3 clients used to lose the answer entirely).
+- **Unicode end to end.** UTF-8 names, `\uXXXX` escapes, surrogate pairs
+  (emoji), BOM, Latin-1 fallback, narrow-unicode builds; `.part` files are
+  renamed only after the size matches, so a cancelled transfer leaves nothing
+  behind.
+- **Python 3 support.** The same file runs on `python3` (with Tk), which is
+  the only way to use it on macOS 12.3+ where Python 2 was removed — and it
+  lets the test suite run on a modern machine.
+- **Test suite + built-in self test.** `tests/test_tigersend.py` (223 – 231
+  checks depending on the interpreter) exercises the protocol over real
+  sockets, misbehaving servers, discovery, cancellation and the GUI (through
+  a fake Tk). `python tigersend.py --self-test` does the same on the old Mac
+  without needing a peer.
+- **`--headless`, `--alias`, `--save-dir`, `--port`, `--announce`,
+  `--self-test`** command line options.
+- Five languages switchable on the fly: English, Español, Français, Deutsch,
+  Português.
 
 ## Checksums
 
-See `SHA256SUMS.txt` attached to this release.
+See `SHA256SUMS.txt` attached to this release (`shasum -a 256 TigerSend-1.8.zip`).
 
 ## Known limitations
 
-- Encryption/HTTPS is not supported (planned for a later major version).
+- Encryption/HTTPS is not supported and cannot be on Tiger/Leopard (no `ssl`
+  module). Turn encryption OFF on the other device.
 - Incoming transfers are auto-accepted (no accept/reject dialog).
 - SHA-256 of received files is not verified (Tiger's Python has no sha256);
   sizes are checked instead.
+- The download API (`download: true`) is not implemented.
 
 ---
 
 *TigerSend is an independent, unofficial project, not affiliated with or
-endorsed by LocalSend or Apple Inc. Use it only on your own trusted local
-network. MIT licensed.*
+endorsed by the LocalSend project. MIT license.*
