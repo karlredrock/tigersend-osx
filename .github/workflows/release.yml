@@ -1,0 +1,67 @@
+name: release
+
+# Builds TigerSend.app from the source in the tag and attaches the ZIP (plus
+# SHA256SUMS.txt) to the GitHub Release. It runs by itself when a release is
+# created, and can be re-run by hand for an existing tag:
+#
+#   gh workflow run release.yml -f tag=v1.8
+#
+# Everything is built with build_app.sh, so the attached file is exactly what
+# the instructions in the README produce.
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to attach the bundle to'
+        required: true
+        default: 'v1.8'
+
+permissions:
+  contents: write
+
+jobs:
+  assets:
+    name: build and attach TigerSend.app
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build the bundle and run its self test
+        run: |
+          chmod +x build_app.sh
+          ./build_app.sh --check
+
+      - name: Check the ZIP really is a working bundle
+        run: |
+          set -e
+          ZIP="$(ls TigerSend-*.zip | head -1)"
+          echo "zip: $ZIP"
+          unzip -l "$ZIP"
+          # the launcher must keep its executable bit in the archive
+          unzip -Z "$ZIP" | grep 'Contents/MacOS/launcher' | grep -q '^-rwx' \
+            || { echo "launcher lost its executable bit"; exit 1; }
+          # no compiled code anywhere: that is what keeps one download valid
+          # on PowerPC and on Intel
+          if unzip -Z1 "$ZIP" | grep -Eq '\.(so|dylib|pyc|pyo)$'; then
+            echo "compiled file in the bundle"; exit 1
+          fi
+          unzip -p "$ZIP" 'TigerSend.app/Contents/Info.plist' | grep -q '10.4' \
+            || { echo "LSMinimumSystemVersion missing"; exit 1; }
+          test -s SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Attach the ZIP to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: gh release upload "$TAG" TigerSend-*.zip SHA256SUMS.txt --clobber
