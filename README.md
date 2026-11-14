@@ -33,7 +33,7 @@ by or endorsed by the LocalSend project.
 > (HTTPS). TigerSend therefore speaks **unencrypted HTTP on port 53317**.
 > Use it only on your own trusted local network.
 
-**Version:** 1.8 (`2.0.8-10.4`) · **License:** MIT (see §12) ·
+**Version:** 1.8.1 (`2.0.9-10.4`) · **License:** MIT (see §12) ·
 **Status:** personal project, built with AI assistance (§11) ·
 **Languages:** English, Español, Français, Deutsch, Português (§5)
 
@@ -80,7 +80,7 @@ gzip`, no `Content-Length`, `204 No Content`, or a `100 Continue` handshake.
 | File | Purpose |
 |---|---|
 | `tigersend.py` | Complete source: Tkinter GUI + HTTP server + multicast discovery + send client + 5-language UI + built-in self test. Runs on Python 2.3 … 3.x. |
-| `build_app.sh` | Builds `TigerSend.app` and `TigerSend-1.8.zip` (Info.plist, launcher, PkgInfo, icon, bundled license). |
+| `build_app.sh` | Builds `TigerSend.app` and `TigerSend-1.8.1.zip` (Info.plist, launcher, PkgInfo, icon, bundled license). |
 | `tests/test_tigersend.py` | Test suite: real sockets, real protocol round trips, scripted misbehaving servers, fake-Tk GUI tests. Runs unchanged on 2.3, 2.5, 2.7 and 3.x. |
 | `tests/check_legacy_syntax.py` | Static checker: refuses syntax and stdlib calls that Tiger's Python 2.3 cannot parse or run. |
 | `tests/run_tests.sh` | Runs the checker, the suite and the self test on every Python installed on the machine. |
@@ -130,7 +130,7 @@ carry it as a **ZIP**.
 
 ### Option A — ZIP on a USB drive (recommended)
 
-1. Build the ZIP yourself: `./build_app.sh` (it produces `TigerSend-1.8.zip`),
+1. Build the ZIP yourself: `./build_app.sh` (it produces `TigerSend-1.8.1.zip`),
    or download it from the Releases page.
 2. Copy it to the Mac running Tiger / Leopard / Snow Leopard.
 3. Double-click the ZIP to expand it, then drag `TigerSend.app` to
@@ -196,7 +196,7 @@ explicitly:
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│ TigerSend 1.8   LocalSend v2.0 - Mac OS X 10.4.11                     │
+│ TigerSend 1.8.1   LocalSend v2.0 - Mac OS X 10.4.11                     │
 │                                  Server: plain HTTP :53317 - running  │
 ├───────────────────────────────────────────────────────────────────────┤
 │ Name:    [ Redstones-MacBook-Air      ] [Apply]                       │
@@ -442,10 +442,10 @@ sh tests/run_tests.sh /tmp/py23/bin/python2.3 /tmp/py2.5/bin/python2.5 \
 Expected output on each interpreter:
 
 ```
-Python 2.3.5 (Tiger)   223 checks passed, 0 failed
-Python 2.5.6 (Leopard) 223 checks passed, 0 failed
-Python 2.7.18          229 checks passed, 0 failed
-Python 3.11            231 checks passed, 0 failed
+Python 2.3.5 (Tiger)   230 checks passed, 0 failed
+Python 2.5.6 (Leopard) 230 checks passed, 0 failed
+Python 2.7.18          236 checks passed, 0 failed
+Python 3.11            238 checks passed, 0 failed
 ```
 
 The difference is only a few tests that need a newer `ast` module.
@@ -478,7 +478,7 @@ cd - && /tmp/py23/bin/python2.3 tests/test_tigersend.py
 
 ```sh
 chmod +x build_app.sh
-./build_app.sh              # TigerSend.app + TigerSend-1.8.zip
+./build_app.sh              # TigerSend.app + TigerSend-1.8.1.zip
 ./build_app.sh --no-zip     # just the .app
 ./build_app.sh --check      # build and self test
 ```

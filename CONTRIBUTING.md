@@ -49,10 +49,10 @@ macOS box a real CPython 2.3.5 is two commands away (see README §9); the
 expected results are:
 
 ```
-Python 2.3.5   223 checks passed, 0 failed
-Python 2.5.6   223 checks passed, 0 failed
-Python 2.7.18  229 checks passed, 0 failed
-Python 3.11    231 checks passed, 0 failed
+Python 2.3.5   230 checks passed, 0 failed
+Python 2.5.6   230 checks passed, 0 failed
+Python 2.7.18  236 checks passed, 0 failed
+Python 3.11    238 checks passed, 0 failed
 ```
 
 The suite needs no display and no peer: it starts engines on loopback and
