@@ -5,6 +5,9 @@ Mac OS X: **10.4 Tiger (PowerPC and Intel)**, Leopard, Snow Leopard, Lion …
 and it also still runs today on macOS with Python 3. One small `.app`, no
 dependencies, no compilation.
 
+<img width="768" height="697" alt="TigerSend" src="https://github.com/user-attachments/assets/14f00548-6da8-44e2-ba91-ad3d2755b1b7" />
+
+
 **IMPORTANT NOTE: this project used AI assisted coding as I personally
 couldn't manage to get the protocol working, however keep in mind I reviewed
 and tested it severely on my computers, as always I strongly suggest you only
