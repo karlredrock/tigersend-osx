@@ -1,17 +1,25 @@
 name: release
 
-# Builds TigerSend.app from the source in the tag and attaches the ZIP (plus
-# SHA256SUMS.txt) to the GitHub Release. It runs by itself when a release is
-# created, and can be re-run by hand for an existing tag:
+# Builds TigerSend.app from the source at a tag and publishes it on the
+# GitHub Release: TigerSend-<version>.zip + SHA256SUMS.txt.
 #
-#   gh workflow run release.yml -f tag=v1.8
+# Three ways to run it:
+#   - push a tag:            git push origin v1.9
+#   - a release is created:  fires automatically
+#   - by hand / by a tool:   gh api -X POST repos/OWNER/REPO/dispatches \
+#                              -f event_type=publish-release \
+#                              -f client_payload[tag]=v1.8
 #
-# Everything is built with build_app.sh, so the attached file is exactly what
-# the instructions in the README produce.
+# If the release does not exist yet it is created from RELEASE_NOTES.md, so a
+# tag push is enough to publish a complete release.
 
 on:
   release:
     types: [created]
+  push:
+    tags: ['v*']
+  repository_dispatch:
+    types: [publish-release]
   workflow_dispatch:
     inputs:
       tag:
@@ -24,13 +32,15 @@ permissions:
 
 jobs:
   assets:
-    name: build and attach TigerSend.app
+    name: build and publish TigerSend.app
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || github.event.client_payload.tag || inputs.tag || github.ref_name }}
     steps:
-      - name: Check out the release tag
+      - name: Check out the tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          ref: ${{ env.TAG }}
 
       - uses: actions/setup-python@v5
         with:
@@ -38,6 +48,7 @@ jobs:
 
       - name: Build the bundle and run its self test
         run: |
+          echo "tag: $TAG"
           chmod +x build_app.sh
           ./build_app.sh --check
 
@@ -60,8 +71,20 @@ jobs:
           test -s SHA256SUMS.txt
           cat SHA256SUMS.txt
 
+      - name: Create the release if this tag has none
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "release $TAG already exists"
+          else
+            echo "creating release $TAG from RELEASE_NOTES.md"
+            gh release create "$TAG" --title "TigerSend ${TAG#v}" \
+              --notes-file RELEASE_NOTES.md --verify-tag
+          fi
+
       - name: Attach the ZIP to the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: gh release upload "$TAG" TigerSend-*.zip SHA256SUMS.txt --clobber
