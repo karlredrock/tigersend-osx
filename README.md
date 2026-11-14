@@ -366,6 +366,13 @@ Not implemented on purpose: HTTPS/TLS, the download API (`download: false`),
 checksum verification (`sha256` is ignored when a sender offers it), and the
 accept/reject dialog (incoming transfers are always accepted).
 
+One cosmetic limitation of this design: because the launcher `exec`s the
+system Python instead of being a compiled Cocoa stub, the **Dock shows the
+generic Python icon** while the app runs (the TigerSend icon is the one in
+Finder, Get Info and the window title). Replacing the launcher with a
+compiled stub would mean shipping a PowerPC **and** an Intel binary — exactly
+what this release avoids.
+
 ---
 
 ## 8. Troubleshooting
