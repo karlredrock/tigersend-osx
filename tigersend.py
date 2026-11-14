@@ -42,8 +42,8 @@ import threading
 import platform
 
 APP_NAME        = 'TigerSend'
-APP_VERSION     = '1.8'
-APP_BUILD       = '2.0.8-10.4'
+APP_VERSION     = '1.8.1'
+APP_BUILD       = '2.0.9-10.4'
 PROTO_VERSION   = '2.0'          # LocalSend protocol version we announce
 API_BASE        = '/api/localsend/v2'
 PORT            = 53317
@@ -2831,6 +2831,9 @@ class TigerSendGUI(object):
         self.build()
         self.retranslate()
         self.engine.start()
+        # the header was painted before start(); paint it again now that the
+        # server has really bound the port, or it would claim "port busy"
+        self.update_server_label()
         self.log_startup()
         self.root.after(200, self.poll_queue)
         self.root.protocol('WM_DELETE_WINDOW', self.on_close)
@@ -3036,6 +3039,15 @@ class TigerSendGUI(object):
     def tr(self, key, *args):
         return translate(self.engine.lang, key, *args)
 
+    def update_server_label(self):
+        """Say what the HTTP server is really doing, in the current language."""
+        if self.engine.server_ok:
+            self.lbl_server.config(text=self.tr('server_running')
+                                   % self.engine.port, fg='#006600')
+        else:
+            self.lbl_server.config(text=self.tr('server_error')
+                                   % self.engine.port, fg='#aa0000')
+
     def retranslate(self):
         self.lbl_title.config(
             text=u'%s %s   LocalSend v%s - %s'
@@ -3059,12 +3071,7 @@ class TigerSendGUI(object):
         self.btn_send.config(text=self.tr('send_to'))
         self.btn_cancel.config(text=self.tr('cancel_transfer'))
         self.lbl_activity.config(text=self.tr('activity'))
-        if self.engine.server_ok:
-            self.lbl_server.config(text=self.tr('server_running')
-                                   % self.engine.port, fg='#006600')
-        else:
-            self.lbl_server.config(text=self.tr('server_error')
-                                   % self.engine.port, fg='#aa0000')
+        self.update_server_label()
         self.lbl_system.config(text=log_text(self.tr('system'),
                                              self.engine.arch,
                                              python_label()))

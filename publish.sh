@@ -5,7 +5,7 @@
 #   ./publish.sh                      # publico, con el nombre de la carpeta
 #   ./publish.sh --private            # repositorio privado
 #   ./publish.sh --name tigersend-osx # otro nombre de repo
-#   ./publish.sh --release            # ademas crea un Release con TigerSend-1.8.zip
+#   ./publish.sh --release            # ademas crea un Release con TigerSend-1.8.1.zip
 #
 # Requiere UNA de estas dos cosas:
 #   A) GitHub CLI autenticado:   gh auth login
@@ -150,20 +150,20 @@ if [ "$DO_RELEASE" = 1 ]; then
     chmod +x build_app.sh
     ./build_app.sh >/dev/null
     rm -rf TigerSend.app/Contents/Resources/__pycache__
-    rm -f TigerSend-1.8.zip
+    rm -f TigerSend-1.8.1.zip
     ./build_app.sh >/dev/null
-    TAG="v1.8"
-    NOTES="TigerSend 1.8 (2.0.8-10.4): funciona en Mac OS X 10.4 Tiger (PowerPC e Intel) y posteriores; Python 2.3 a 3.x, sin dependencias; HTTP plano en el puerto 53317 (desactiva el cifrado en el otro dispositivo)."
-    ASSETS="TigerSend-1.8.zip"
+    TAG="v1.8.1"
+    NOTES="TigerSend 1.8.1 (2.0.9-10.4): funciona en Mac OS X 10.4 Tiger (PowerPC e Intel) y posteriores; Python 2.3 a 3.x, sin dependencias; HTTP plano en el puerto 53317 (desactiva el cifrado en el otro dispositivo)."
+    ASSETS="TigerSend-1.8.1.zip"
     if [ -f SHA256SUMS.txt ]; then ASSETS="$ASSETS SHA256SUMS.txt"; fi
     if [ "$METHOD" = "gh" ]; then
-        gh release create "$TAG" $ASSETS --title "TigerSend 1.8" --notes "$NOTES" 2>/dev/null \
+        gh release create "$TAG" $ASSETS --title "TigerSend 1.8.1" --notes "$NOTES" 2>/dev/null \
             || echo "==> El Release $TAG ya existia"
     else
         REL_ID="$(curl -fsS -X POST -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/$OWNER/$REPO_NAME/releases" \
-            -d "{\"tag_name\":\"$TAG\",\"name\":\"TigerSend 1.8\",\"body\":\"$NOTES\"}" | json_field id)"
+            -d "{\"tag_name\":\"$TAG\",\"name\":\"TigerSend 1.8.1\",\"body\":\"$NOTES\"}" | json_field id)"
         if [ -n "$REL_ID" ]; then
             for asset in $ASSETS; do
                 case "$asset" in

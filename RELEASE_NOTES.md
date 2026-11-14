@@ -1,4 +1,51 @@
-# TigerSend 1.8 (2.0.8-10.4)
+# TigerSend 1.8.1 (2.0.9-10.4)
+
+**LocalSend protocol v2 client for Mac OS X 10.4 Tiger → modern macOS, on
+PowerPC and on Intel.** Plain HTTP on port 53317, UDP multicast discovery,
+Tkinter GUI, zero dependencies — it runs on the Python (2.3 – 3.x) that ships
+with the system.
+
+## What changed in 1.8.1
+
+- **The header no longer claims "port 53317 busy" when the port is free.**
+  The server label was painted *before* `engine.start()`, so a freshly opened
+  window could show `Server: ERROR - port 53317 busy` in red while the HTTP
+  server was in fact listening and receiving files normally — the log already
+  said `HTTP server listening on 0.0.0.0:53317`. The label is now repainted
+  as soon as the server has bound the port, and it is drawn by a single
+  `update_server_label()` helper, so changing the language refreshes it as
+  well. Two GUI tests cover it.
+
+Nothing else changed: same protocol, same scripts, same limitations as 1.8
+(documented below).
+
+## Install
+
+1. Download **`TigerSend-1.8.1.zip`** below and copy it to the old Mac (USB
+   stick, SMB, FTP…). Always carry the ZIP, not the bare `.app` folder.
+2. Double-click the ZIP to expand it and drag `TigerSend.app` to
+   `/Applications`.
+3. Double-click `TigerSend.app`. No Terminal window opens; if nothing
+   happens, check `~/Library/Logs/TigerSend.log` and re-apply the executable
+   bit once:
+
+   ```sh
+   chmod +x /Applications/TigerSend.app/Contents/MacOS/launcher
+   ```
+
+> ⚠️ **Before transferring anything**: on the phone / modern computer open
+> LocalSend → Settings → **Encryption → OFF**, then restart LocalSend there.
+> Tiger/Leopard/Snow Leopard cannot do modern TLS, so TigerSend only speaks
+> plain HTTP.
+
+## Checksums
+
+See `SHA256SUMS.txt` attached to this release
+(`shasum -a 256 TigerSend-1.8.1.zip`).
+
+---
+
+# TigerSend 1.8 (2.0.8-10.4) — previous release
 
 **LocalSend protocol v2 client for Mac OS X 10.4 Tiger → modern macOS, on
 PowerPC and on Intel.** Plain HTTP on port 53317, UDP multicast discovery,
@@ -60,7 +107,7 @@ This release is the "make it work on Tiger, on both architectures" release.
 - **Python 3 support.** The same file runs on `python3` (with Tk), which is
   the only way to use it on macOS 12.3+ where Python 2 was removed — and it
   lets the test suite run on a modern machine.
-- **Test suite + built-in self test.** `tests/test_tigersend.py` (223 – 231
+- **Test suite + built-in self test.** `tests/test_tigersend.py` (230 – 238
   checks depending on the interpreter) exercises the protocol over real
   sockets, misbehaving servers, discovery, cancellation and the GUI (through
   a fake Tk). `python tigersend.py --self-test` does the same on the old Mac

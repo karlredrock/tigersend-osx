@@ -1084,6 +1084,15 @@ def test_gui():
         check('gui shows the architecture', 'PowerPC' in gui.lbl_system.cget(
             'text') or 'Intel' in gui.lbl_system.cget('text'),
             gui.lbl_system.cget('text'))
+        # the header must not say "port busy" when the server is running:
+        # the label is painted before engine.start(), so it needs repainting
+        check('gui server label matches the running server',
+              gui.lbl_server.cget('text') == ts.translate(
+                  engine.lang, 'server_running', engine.port),
+              gui.lbl_server.cget('text'))
+        check('gui server label is green when running',
+              gui.lbl_server.cget('fg') == '#006600',
+              gui.lbl_server.cget('fg'))
 
         # every language must translate every widget without exploding
         for code in ts.LANG_ORDER:
@@ -1091,6 +1100,10 @@ def test_gui():
             gui.on_language()
             check('gui language %s' % code, gui.lbl_name.cget('text')
                   == ts.TR[code]['name'], gui.lbl_name.cget('text'))
+            check('gui language %s server label' % code,
+                  gui.lbl_server.cget('text')
+                  == ts.translate(code, 'server_running', engine.port),
+                  gui.lbl_server.cget('text'))
         gui.var_lang.set('en')
         gui.on_language()
 

@@ -31,8 +31,8 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 cd "$SCRIPT_DIR"
 
 APP_NAME="TigerSend"
-APP_VERSION="1.8"
-APP_BUILD="2.0.8-10.4"
+APP_VERSION="1.8.1"
+APP_BUILD="2.0.9-10.4"
 BUNDLE_ID="org.tigersend.TigerSend"
 BUNDLE_SIGNATURE="TgSd"
 APP_FILE="$APP_NAME.app"
